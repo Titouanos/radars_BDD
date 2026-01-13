@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radars France - Carte</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialisation de la carte centrée sur la France
+        const map = L.map('map').setView([46.603354, 1.888334], 6);
+
+        // Fond de carte OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Chargement des radars
+        fetch('data/radars.json')
+            .then(response => response.json())
+            .then(radars => {
+                radars.forEach(radar => {
+                    if (radar.latitude && radar.longitude) {
+                        L.circleMarker([radar.latitude, radar.longitude], {
+                            radius: 6,
+                            fillColor: '#e74c3c',
+                            color: '#fff',
+                            weight: 1,
+                            fillOpacity: 0.8
+                        }).addTo(map);
+                    }
+                });
+                console.log(`${radars.length} radars chargés`);
+            });
+    </script>
+</body>
+
+</html>
