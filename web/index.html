@@ -12,12 +12,14 @@
 
     <style>
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.25);
-            --glass-border: rgba(255, 255, 255, 0.18);
-            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
-            --blur: 20px;
-            --text-primary: #1d1d1f;
-            --text-secondary: #86868b;
+            --glass-white: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+            --blur: 25px;
+            --accent-blue: rgba(120, 180, 255, 0.7);
+            --accent-purple: rgba(180, 140, 255, 0.7);
+            --accent-pink: rgba(255, 140, 200, 0.7);
+            --accent-cyan: rgba(100, 220, 255, 0.7);
         }
 
         * {
@@ -27,8 +29,9 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
             overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         }
 
         #map {
@@ -40,47 +43,58 @@
             z-index: 1;
         }
 
-        .glass-header {
-            position: absolute;
-            top: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: var(--glass-bg);
+        .glass-panel {
+            background: var(--glass-white);
             backdrop-filter: blur(var(--blur));
             -webkit-backdrop-filter: blur(var(--blur));
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 16px 32px;
             box-shadow: var(--glass-shadow);
         }
 
+        .glass-header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            border-radius: 24px;
+            padding: 14px 28px;
+        }
+
         .glass-header h1 {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 500;
-            color: var(--text-primary);
-            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #78b4ff 0%, #b48cff 50%, #ff8cc8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.3px;
         }
 
         .glass-stats {
             position: absolute;
-            bottom: 24px;
-            left: 24px;
+            bottom: 20px;
+            left: 20px;
             z-index: 1000;
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur));
-            -webkit-backdrop-filter: blur(var(--blur));
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 16px 24px;
-            box-shadow: var(--glass-shadow);
+            border-radius: 20px;
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .glass-stats .stat-value {
             font-weight: 600;
-            font-size: 24px;
-            letter-spacing: -1px;
-            color: var(--text-primary);
+            font-size: 22px;
+            background: linear-gradient(135deg, #64dcff 0%, #78b4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-stats span {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
         }
 
         .glass-loading {
@@ -89,24 +103,19 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 2000;
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur));
-            -webkit-backdrop-filter: blur(var(--blur));
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 40px 60px;
-            box-shadow: var(--glass-shadow);
+            border-radius: 28px;
+            padding: 36px 50px;
             text-align: center;
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(0, 0, 0, 0.1);
-            border-top-color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-cyan);
             border-radius: 50%;
             animation: spin 0.8s ease-in-out infinite;
-            margin: 0 auto 16px;
+            margin: 0 auto 14px;
         }
 
         @keyframes spin {
@@ -116,56 +125,127 @@
         }
 
         .glass-loading p {
-            font-size: 15px;
-            color: var(--text-primary);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
         }
 
+        /* Custom popup */
         .leaflet-popup-content-wrapper {
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur));
-            -webkit-backdrop-filter: blur(var(--blur));
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            box-shadow: var(--glass-shadow);
+            background: rgba(20, 25, 45, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .leaflet-popup-tip {
-            background: var(--glass-bg);
+            background: rgba(20, 25, 45, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .radar-popup h3 {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 12px;
+            background: linear-gradient(135deg, #78b4ff 0%, #b48cff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
         }
 
         .radar-popup p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin: 6px 0;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin: 5px 0;
         }
 
         .radar-popup strong {
-            color: var(--text-primary);
-            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Custom cluster */
+        .marker-cluster {
+            background: rgba(120, 180, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .marker-cluster div {
+            background: linear-gradient(135deg, rgba(100, 220, 255, 0.8), rgba(180, 140, 255, 0.8));
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            border-radius: 50%;
+        }
+
+        .marker-cluster-small {
+            background: rgba(100, 220, 255, 0.2);
+        }
+
+        .marker-cluster-medium {
+            background: rgba(120, 180, 255, 0.25);
+        }
+
+        .marker-cluster-large {
+            background: rgba(180, 140, 255, 0.25);
+        }
+
+        /* Custom marker */
+        .radar-marker {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(100, 220, 255, 0.6));
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 12px rgba(100, 220, 255, 0.6), 0 0 24px rgba(100, 220, 255, 0.3);
+        }
+
+        .radar-marker.fixe {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(120, 180, 255, 0.7));
+            box-shadow: 0 0 12px rgba(120, 180, 255, 0.6);
+        }
+
+        .radar-marker.discriminant {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(180, 140, 255, 0.7));
+            box-shadow: 0 0 12px rgba(180, 140, 255, 0.6);
+        }
+
+        .radar-marker.feu {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(255, 140, 200, 0.7));
+            box-shadow: 0 0 12px rgba(255, 140, 200, 0.6);
+        }
+
+        .radar-marker.troncon {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(100, 255, 200, 0.7));
+            box-shadow: 0 0 12px rgba(100, 255, 200, 0.6);
+        }
+
+        .radar-marker.tourelle {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(255, 200, 100, 0.7));
+            box-shadow: 0 0 12px rgba(255, 200, 100, 0.6);
+        }
+
+        /* Dark map tiles */
+        .leaflet-tile-pane {
+            filter: saturate(0.8) brightness(0.85);
         }
     </style>
 </head>
 
 <body>
-    <div class="glass-header">
+    <div class="glass-panel glass-header">
         <h1>Radars France</h1>
     </div>
 
-    <div class="glass-loading" id="loading">
+    <div class="glass-panel glass-loading" id="loading">
         <div class="spinner"></div>
-        <p>Chargement des radars...</p>
+        <p>Chargement...</p>
     </div>
 
-    <div class="glass-stats" id="stats" style="display: none;">
+    <div class="glass-panel glass-stats" id="stats" style="display: none;">
         <span class="stat-value" id="radarCount">0</span>
-        <span> radars</span>
+        <span>radars</span>
     </div>
 
     <div id="map"></div>
@@ -173,18 +253,52 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script>
-        const map = L.map('map').setView([46.603354, 1.888334], 6);
+        const map = L.map('map', {
+            zoomControl: false
+        }).setView([46.603354, 1.888334], 6);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: 'OpenStreetMap, CartoDB',
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '',
             maxZoom: 19
         }).addTo(map);
 
         const markers = L.markerClusterGroup({
-            maxClusterRadius: 60,
+            maxClusterRadius: 50,
             spiderfyOnMaxZoom: true,
-            showCoverageOnHover: false
+            showCoverageOnHover: false,
+            iconCreateFunction: function (cluster) {
+                const count = cluster.getChildCount();
+                let size = 'small';
+                if (count > 50) size = 'large';
+                else if (count > 20) size = 'medium';
+
+                return L.divIcon({
+                    html: '<div>' + count + '</div>',
+                    className: 'marker-cluster marker-cluster-' + size,
+                    iconSize: L.point(40, 40)
+                });
+            }
         });
+
+        function getMarkerClass(type) {
+            if (!type) return '';
+            const t = type.toLowerCase();
+            if (t.includes('discriminant')) return 'discriminant';
+            if (t.includes('feu')) return 'feu';
+            if (t.includes('troncon')) return 'troncon';
+            if (t.includes('tourelle')) return 'tourelle';
+            return 'fixe';
+        }
+
+        function createMarkerIcon(type) {
+            return L.divIcon({
+                className: 'radar-marker ' + getMarkerClass(type),
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+        }
 
         async function loadRadars() {
             try {
@@ -203,21 +317,23 @@
                         </div>
                     `;
 
-                    const marker = L.marker([r.latitude, r.longitude]).bindPopup(popup);
+                    const marker = L.marker([r.latitude, r.longitude], {
+                        icon: createMarkerIcon(r.type)
+                    }).bindPopup(popup);
+
                     markers.addLayer(marker);
                 });
 
                 map.addLayer(markers);
 
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('stats').style.display = 'block';
+                document.getElementById('stats').style.display = 'flex';
                 document.getElementById('radarCount').textContent = radars.length;
 
             } catch (error) {
                 console.error(error);
                 document.getElementById('loading').innerHTML = `
-                    <p style="color: #ff3b30;">Erreur de chargement</p>
-                    <p style="font-size: 12px; margin-top: 8px;">Verifiez la connexion a la base de donnees</p>
+                    <p style="color: #ff8cc8;">Erreur de chargement</p>
                 `;
             }
         }
