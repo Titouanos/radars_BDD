@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radars France</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            --blur: 20px;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .glass-header {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 16px 32px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .glass-header h1::before {
+            content: '📍';
+        }
+
+        .glass-stats {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-stats .stat {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .glass-stats .stat-value {
+            font-weight: 600;
+            font-size: 24px;
+            letter-spacing: -1px;
+        }
+
+        .glass-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px 60px;
+            box-shadow: var(--glass-shadow);
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top-color: var(--text-primary);
+            border-radius: 50%;
+            animation: spin 0.8s ease-in-out infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .glass-loading p {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        /* Popup styling */
+        .leaflet-popup-content-wrapper {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .leaflet-popup-tip {
+            background: var(--glass-bg);
+        }
+
+        .radar-popup {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+        }
+
+        .radar-popup h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .radar-popup p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 6px 0;
+        }
+
+        .radar-popup strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Cluster styling */
+        .marker-cluster-small,
+        .marker-cluster-medium,
+        .marker-cluster-large {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+        }
+
+        .marker-cluster-small div,
+        .marker-cluster-medium div,
+        .marker-cluster-large div {
+            background: rgba(100, 100, 255, 0.6);
+            color: white;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="glass-header">
+        <h1>Radars France</h1>
+    </div>
+
+    <div class="glass-loading" id="loading">
+        <div class="spinner"></div>
+        <p>Chargement des radars...</p>
+    </div>
+
+    <div class="glass-stats" id="stats" style="display: none;">
+        <div class="stat">
+            <span class="stat-value" id="radarCount">0</span>
+            <span> radars</span>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script>
+        const map = L.map('map').setView([46.603354, 1.888334], 6);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap © CartoDB',
+            maxZoom: 19
+        }).addTo(map);
+
+        const markers = L.markerClusterGroup({
+            maxClusterRadius: 60,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false
+        });
+
+        const typeNames = {
+            'Radar fixe': '📸 Radar fixe',
+            'Radar discriminant': '🎯 Discriminant',
+            'Radar feu rouge': '🚦 Feu rouge',
+            'Radar passage à niveau': '🚂 Passage à niveau',
+            'Radar tronçon': '📏 Tronçon',
+            'Radar tourelle': '🗼 Tourelle'
+        };
+
+        async function loadRadars() {
+            try {
+                const response = await fetch('/api/radars');
+                const radars = await response.json();
+
+                radars.forEach(r => {
+                    const typeName = typeNames[r.type] || r.type;
+
+                    const popup = `
+                        <div class="radar-popup">
+                            <h3>${typeName}</h3>
+                            ${r.vitesse_vl ? `<p><strong>Vitesse VL:</strong> ${r.vitesse_vl} km/h</p>` : ''}
+                            ${r.vitesse_pl ? `<p><strong>Vitesse PL:</strong> ${r.vitesse_pl} km/h</p>` : ''}
+                            ${r.route ? `<p><strong>Route:</strong> ${r.route}</p>` : ''}
+                            ${r.direction ? `<p><strong>Direction:</strong> ${r.direction}</p>` : ''}
+                        </div>
+                    `;
+
+                    const marker = L.marker([r.latitude, r.longitude]).bindPopup(popup);
+                    markers.addLayer(marker);
+                });
+
+                map.addLayer(markers);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('stats').style.display = 'block';
+                document.getElementById('radarCount').textContent = radars.length;
+
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: #ff3b30;">Erreur de chargement</p>
+                    <p style="font-size: 12px; margin-top: 8px;">Vérifiez que le serveur est démarré</p>
+                `;
+            }
+        }
+
+        loadRadars();
+    </script>
+</body>
+
+</html>
