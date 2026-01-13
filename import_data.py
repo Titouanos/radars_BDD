@@ -34,7 +34,12 @@ def import_radars_from_csv():
         with open(CSV_FILE, 'r', encoding='latin-1') as file:
             csv_reader = csv.DictReader(file, delimiter=';')
             
-            for row in csv_reader:
+            print(f"📋 Colonnes trouvées dans le CSV: {csv_reader.fieldnames}")
+            
+            for i, row in enumerate(csv_reader):
+                if i == 0:
+                    print(f"🔍 Première ligne: {row}")
+                
                 try:
                     # Extraction et nettoyage des données
                     numero = row.get('Numéro de radar', '').strip()
@@ -53,6 +58,8 @@ def import_radars_from_csv():
                     
                     if not latitude_str or not longitude_str:
                         error_count += 1
+                        if i < 5:
+                            print(f"⚠️  Ligne {i+1}: Coordonnées manquantes")
                         continue
                     
                     latitude = float(latitude_str)
@@ -71,6 +78,8 @@ def import_radars_from_csv():
                     
                 except (ValueError, KeyError) as e:
                     error_count += 1
+                    if i < 10:
+                        print(f"⚠️  Ligne {i+1}: Erreur {e}")
                     continue
         
         conn.commit()

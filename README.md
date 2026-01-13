@@ -1,6 +1,6 @@
 # 📍 Radars Fixes en France
 
-Application web interactive pour visualiser et filtrer les **3400+ radars fixes** répertoriés en France. Données officielles de **data.gouv.fr**.
+Application **desktop Python** pour visualiser et filtrer les **3400+ radars fixes** répertoriés en France. Données officielles de **data.gouv.fr**.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-green)
@@ -8,12 +8,13 @@ Application web interactive pour visualiser et filtrer les **3400+ radars fixes*
 
 ## ✨ Fonctionnalités
 
-- 🗺️ **Carte interactive** avec clustering des radars
+- 🗺️ **Carte interactive** avec tkintermapview (OpenStreetMap)
 - 🔍 **Filtrage avancé** par type de radar et vitesse
 - 📊 **Statistiques en temps réel**
-- 🎨 **Interface moderne** avec design glassmorphism
-- 📱 **Responsive** - fonctionne sur mobile, tablette et desktop
+- 🎨 **Interface moderne** avec CustomTkinter (dark mode)
+- 🖥️ **Application desktop** - pas besoin de navigateur
 - ⚡ **Performance optimisée** avec SQLite
+- 📦 **Standalone** - fonctionne offline après installation
 
 ## 🚀 Types de Radars
 
@@ -36,7 +37,7 @@ Application web interactive pour visualiser et filtrer les **3400+ radars fixes*
 1. **Installer les dépendances Python**
 
 ```bash
-pip install -r requirements.txt
+pip install tkintermapview Pillow customtkinter
 ```
 
 2. **Importer les données dans la base de données**
@@ -50,71 +51,50 @@ Cette commande va :
 - Importer les ~3400 radars depuis le fichier CSV
 - Créer les indexes pour optimiser les performances
 
-3. **Lancer le serveur**
+3. **Lancer l'application GUI**
 
 ```bash
-python main.py
+python app_gui.py
 ```
 
-Ou avec uvicorn :
-
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-4. **Accéder à l'application**
-
-- **Interface web** : http://localhost:8000
-- **Documentation API** : http://localhost:8000/docs
-- **API alternative** : http://localhost:8000/redoc
+L'application s'ouvrira dans une fenêtre desktop (1400x900 pixels).
 
 ## 🛠️ Architecture
 
 ### Backend (Python)
 
-- **FastAPI** : Framework web moderne et rapide
 - **SQLite** : Base de données légère
-- **Pydantic** : Validation des données
-- **Uvicorn** : Serveur ASGI
+- **database.py** : Fonctions CRUD pour accès aux données
 
-### Frontend
+### Interface Graphique
 
-- **HTML5** : Structure sémantique
-- **CSS3** : Design moderne avec variables CSS et animations
-- **JavaScript** : Logique côté client
-- **Leaflet.js** : Carte interactive
-- **Leaflet.markercluster** : Clustering des marqueurs
+- **CustomTkinter** : Interface moderne (dark mode)
+- **tkintermapview** : Carte OpenStreetMap interactive
+- **Pillow** : Gestion des images
+- **Threading** : Chargement asynchrone des données
 
-## 📡 API Endpoints
+## 🖱️ Utilisation de l'Interface
 
-### `GET /api/radars`
+### Panneau de Filtres (Gauche)
 
-Liste tous les radars avec pagination et filtres.
+- **Types de radars** : Cocher/décocher les types à afficher
+- **Vitesse** : Entrer une vitesse min/max pour filtrer
+- **Recherche** : Taper une route (ex: "A1") ou ville
+- **Appliquer** : Applique les filtres sélectionnés
+- **Réinitialiser** : Réinitialise tous les filtres
 
-**Query Parameters:**
-- `page` : Numéro de page (défaut: 1)
-- `limit` : Résultats par page (défaut: 100, max: 1000)
-- `type` : Filtrer par type (ETD, ETFR, etc.)
-- `vitesse_min` : Vitesse minimale
-- `vitesse_max` : Vitesse maximale
-- `search` : Recherche textuelle
+### Carte Interactive (Droite)
 
-**Exemple:**
-```bash
-curl "http://localhost:8000/api/radars?type=ETD&vitesse_min=90&limit=10"
-```
+- **Navigation** : Clic gauche + glisser pour déplacer la carte
+- **Zoom** : Molette de la souris ou boutons +/-
+- **Marqueurs** : Cliquer sur un radar pour voir ses détails
+- **Affichage** : Jusqu'à 2000 radars simultanément pour performance
 
-### `GET /api/radars/{id}`
+### Statistiques
 
-Récupère les détails d'un radar spécifique.
-
-### `GET /api/types`
-
-Liste tous les types de radars disponibles.
-
-### `GET /api/stats`
-
-Statistiques globales (total, répartition par type, vitesses).
+- **Total** : Nombre total de radars dans la base
+- **Affichés** : Nombre de radars correspondant aux filtres
+- **Vitesse moy** : Vitesse moyenne des radars affichés
 
 ## 📊 Source des Données
 
@@ -122,14 +102,15 @@ Les données proviennent du jeu de données officiel **"Liste des radars fixes e
 
 Source : Ministère de l'Intérieur - Sécurité Routière
 
-## 🎨 Captures d'écran
+## 🎨 Interface
 
-L'interface propose :
-- Une carte interactive en plein écran
-- Un panneau latéral de filtres avec glassmorphism
-- Des statistiques en temps réel
-- Un design dark mode moderne
-- Des animations fluides
+L'application propose :
+- Une fenêtre desktop moderne (1400x900)
+- Panneau de filtres à gauche (320px)
+- Carte interactive à droite avec OpenStreetMap
+- Design dark mode avec CustomTkinter
+- Popups détaillées au clic sur radar
+- Statistiques en temps réel
 
 ## 🤝 Contribution
 
