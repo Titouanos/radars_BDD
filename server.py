@@ -1,23 +1,44 @@
 """
-Serveur API simple pour les radars - PostgreSQL
+Serveur API pour les radars - Charge les donnees depuis le CSV
 """
 from flask import Flask, jsonify, send_from_directory
-import psycopg2
+import csv
 import os
 
 app = Flask(__name__, static_folder='web')
 
-# Configuration PostgreSQL
-DB_CONFIG = {
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'port': os.getenv('DB_PORT', '5432'),
-    'database': os.getenv('DB_NAME', 'radars'),
-    'user': os.getenv('DB_USER', 'postgres'),
-    'password': os.getenv('DB_PASSWORD', '')
-}
+def load_radars_from_csv():
+    """Charge les radars depuis le fichier CSV"""
+    radars = []
+    csv_path = os.path.join(os.path.dirname(__file__), 'data', 'radars.csv')
+    
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f, delimiter=',')
+        for row in reader:
+            try:
+                lat = row.get('latitude', '')
+                lon = row.get('longitude', '')
+                if not lat or not lon:
+                    continue
+                    
+                radar = {
+                    'id': row.get('id', ''),
+                    'latitude': float(lat),
+                    'longitude': float(lon),
+                    'type': row.get('type', 'Radar'),
+                    'vitesse_vl': row.get('vitesse_vehicules_legers_kmh', ''),
+                    'vitesse_pl': row.get('vitesse_poids_lourds_kmh', ''),
+                    'route': row.get('route', ''),
+                    'direction': row.get('direction', '')
+                }
+                radars.append(radar)
+            except (ValueError, KeyError) as e:
+                continue
+    
+    return radars
 
-def get_connection():
-    return psycopg2.connect(**DB_CONFIG)
+# Cache des radars
+RADARS_CACHE = None
 
 @app.route('/')
 def index():
@@ -25,24 +46,11 @@ def index():
 
 @app.route('/api/radars')
 def get_radars():
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    cur.execute("""
-        SELECT r.id, r.latitude, r.longitude, t.libelle as type,
-               r.vitesse_vl_kmh, r.vitesse_pl_kmh, r.route, r.direction
-        FROM radar r
-        JOIN type_radar t ON r.type_id = t.id
-    """)
-    
-    columns = ['id', 'latitude', 'longitude', 'type', 'vitesse_vl', 'vitesse_pl', 'route', 'direction']
-    radars = [dict(zip(columns, row)) for row in cur.fetchall()]
-    
-    cur.close()
-    conn.close()
-    
-    return jsonify(radars)
+    global RADARS_CACHE
+    if RADARS_CACHE is None:
+        RADARS_CACHE = load_radars_from_csv()
+    return jsonify(RADARS_CACHE)
 
 if __name__ == '__main__':
-    print("🚀 Serveur démarré sur http://localhost:5000")
+    print("Serveur demarre sur http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
