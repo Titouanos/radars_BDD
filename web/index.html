@@ -4,50 +4,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radars France - Carte</title>
+    <title>Radars France - Carte avec Filtres</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
+            display: flex;
+        }
+
+        #sidebar {
+            width: 280px;
+            padding: 20px;
+            background: #f5f5f5;
         }
 
         #map {
-            width: 100%;
+            flex: 1;
             height: 100vh;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 8px;
+        }
+
+        h2 {
+            margin-top: 0;
         }
     </style>
 </head>
 
 <body>
+    <div id="sidebar">
+        <h2>🎯 Filtres</h2>
+        <div class="filter-group">
+            <label>Type de radar</label>
+            <select id="filter-type">
+                <option value="">Tous les types</option>
+                <option value="Radar fixe">Radar fixe</option>
+                <option value="Radar feu rouge">Radar feu rouge</option>
+                <option value="Radar discriminant">Radar discriminant</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Vitesse limite</label>
+            <select id="filter-vitesse">
+                <option value="">Toutes</option>
+                <option value="50">50 km/h</option>
+                <option value="70">70 km/h</option>
+                <option value="90">90 km/h</option>
+                <option value="110">110 km/h</option>
+                <option value="130">130 km/h</option>
+            </select>
+        </div>
+        <p id="count">Radars affichés: -</p>
+    </div>
     <div id="map"></div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialisation de la carte centrée sur la France
         const map = L.map('map').setView([46.603354, 1.888334], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Fond de carte OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        let allRadars = [];
+        let markers = L.layerGroup().addTo(map);
 
-        // Chargement des radars
+        // Charger les données
         fetch('data/radars.json')
-            .then(response => response.json())
-            .then(radars => {
-                radars.forEach(radar => {
-                    if (radar.latitude && radar.longitude) {
-                        L.circleMarker([radar.latitude, radar.longitude], {
-                            radius: 6,
-                            fillColor: '#e74c3c',
-                            color: '#fff',
-                            weight: 1,
-                            fillOpacity: 0.8
-                        }).addTo(map);
-                    }
-                });
-                console.log(`${radars.length} radars chargés`);
+            .then(r => r.json())
+            .then(data => {
+                allRadars = data;
+                displayRadars(allRadars);
             });
+
+        // Afficher les radars
+        function displayRadars(radars) {
+            markers.clearLayers();
+            radars.forEach(r => {
+                if (r.latitude && r.longitude) {
+                    L.circleMarker([r.latitude, r.longitude], {
+                        radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 1, fillOpacity: 0.8
+                    }).addTo(markers);
+                }
+            });
+            document.getElementById('count').textContent = `Radars affichés: ${radars.length}`;
+        }
+
+        // Filtres
+        function applyFilters() {
+            const type = document.getElementById('filter-type').value;
+            const vitesse = document.getElementById('filter-vitesse').value;
+
+            const filtered = allRadars.filter(r => {
+                if (type && r.type !== type) return false;
+                if (vitesse && r.vitesse != vitesse) return false;
+                return true;
+            });
+            displayRadars(filtered);
+        }
+
+        document.getElementById('filter-type').addEventListener('change', applyFilters);
+        document.getElementById('filter-vitesse').addEventListener('change', applyFilters);
     </script>
 </body>
 
