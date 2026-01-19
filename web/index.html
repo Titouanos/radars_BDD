@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radars France - Carte avec Filtres</title>
+    <title>Radars France - Carte avec Stats</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <style>
         body {
             margin: 0;
@@ -14,9 +16,13 @@
         }
 
         #sidebar {
-            width: 280px;
+            width: 300px;
             padding: 20px;
-            background: #f5f5f5;
+            background: #2c3e50;
+            color: white;
+            overflow-y: auto;
+            height: 100vh;
+            box-sizing: border-box;
         }
 
         #map {
@@ -31,23 +37,54 @@
         .filter-group label {
             display: block;
             margin-bottom: 5px;
-            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
         }
 
         .filter-group select {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
         }
 
         h2 {
             margin-top: 0;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #95a5a6;
         }
     </style>
 </head>
 
 <body>
     <div id="sidebar">
-        <h2>🎯 Filtres</h2>
+        <h2>📡 Radars France</h2>
+
         <div class="filter-group">
             <label>Type de radar</label>
             <select id="filter-type">
@@ -55,67 +92,73 @@
                 <option value="Radar fixe">Radar fixe</option>
                 <option value="Radar feu rouge">Radar feu rouge</option>
                 <option value="Radar discriminant">Radar discriminant</option>
+                <option value="Radar Vitesse Moyenne">Radar Vitesse Moyenne</option>
             </select>
         </div>
+
         <div class="filter-group">
-            <label>Vitesse limite</label>
-            <select id="filter-vitesse">
-                <option value="">Toutes</option>
-                <option value="50">50 km/h</option>
-                <option value="70">70 km/h</option>
-                <option value="90">90 km/h</option>
-                <option value="110">110 km/h</option>
-                <option value="130">130 km/h</option>
+            <label>Département</label>
+            <select id="filter-dept">
+                <option value="">Tous</option>
             </select>
         </div>
-        <p id="count">Radars affichés: -</p>
+
+        <h2>📊 Statistiques</h2>
+        <div class="stats-grid" id="stats"></div>
     </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script>
         const map = L.map('map').setView([46.603354, 1.888334], 6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
         let allRadars = [];
-        let markers = L.layerGroup().addTo(map);
+        const markers = L.markerClusterGroup();
+        map.addLayer(markers);
 
-        // Charger les données
         fetch('data/radars.json')
             .then(r => r.json())
             .then(data => {
                 allRadars = data;
+                // Remplir les départements
+                const depts = [...new Set(data.map(r => r.dept))].sort();
+                const sel = document.getElementById('filter-dept');
+                depts.forEach(d => sel.innerHTML += `<option value="${d}">${d}</option>`);
                 displayRadars(allRadars);
             });
 
-        // Afficher les radars
         function displayRadars(radars) {
             markers.clearLayers();
+            const colors = { 'Radar fixe': '#e74c3c', 'Radar feu rouge': '#f39c12', 'Radar discriminant': '#9b59b6', 'Radar Vitesse Moyenne': '#3498db' };
+
             radars.forEach(r => {
                 if (r.latitude && r.longitude) {
                     L.circleMarker([r.latitude, r.longitude], {
-                        radius: 6, fillColor: '#e74c3c', color: '#fff', weight: 1, fillOpacity: 0.8
-                    }).addTo(markers);
+                        radius: 7, fillColor: colors[r.type] || '#95a5a6', color: '#fff', weight: 2, fillOpacity: 0.8
+                    }).bindPopup(`<b>${r.emplacement || 'Radar'}</b><br>Type: ${r.type}<br>Vitesse: ${r.vitesse || '-'} km/h`).addTo(markers);
                 }
             });
-            document.getElementById('count').textContent = `Radars affichés: ${radars.length}`;
+            updateStats(radars);
         }
 
-        // Filtres
+        function updateStats(radars) {
+            const types = {};
+            radars.forEach(r => types[r.type] = (types[r.type] || 0) + 1);
+            document.getElementById('stats').innerHTML = Object.entries(types).slice(0, 4).map(([t, c]) =>
+                `<div class="stat-card"><div class="stat-value">${c}</div><div class="stat-label">${t.replace('Radar ', '')}</div></div>`
+            ).join('');
+        }
+
         function applyFilters() {
             const type = document.getElementById('filter-type').value;
-            const vitesse = document.getElementById('filter-vitesse').value;
-
-            const filtered = allRadars.filter(r => {
-                if (type && r.type !== type) return false;
-                if (vitesse && r.vitesse != vitesse) return false;
-                return true;
-            });
-            displayRadars(filtered);
+            const dept = document.getElementById('filter-dept').value;
+            displayRadars(allRadars.filter(r => (!type || r.type === type) && (!dept || r.dept === dept)));
         }
 
         document.getElementById('filter-type').addEventListener('change', applyFilters);
-        document.getElementById('filter-vitesse').addEventListener('change', applyFilters);
+        document.getElementById('filter-dept').addEventListener('change', applyFilters);
     </script>
 </body>
 
