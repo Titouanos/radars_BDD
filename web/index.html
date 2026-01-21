@@ -4,161 +4,545 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radars France - Carte avec Stats</title>
+    <title>Radars France</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
+        * {
             margin: 0;
-            font-family: Arial, sans-serif;
-            display: flex;
-        }
-
-        #sidebar {
-            width: 300px;
-            padding: 20px;
-            background: #2c3e50;
-            color: white;
-            overflow-y: auto;
-            height: 100vh;
+            padding: 0;
             box-sizing: border-box;
         }
 
-        #map {
-            flex: 1;
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar Liquid Glass */
+        .sidebar {
+            width: 360px;
             height: 100vh;
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.08) 0%,
+                    rgba(255, 255, 255, 0.02) 100%);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 28px;
+            overflow-y: auto;
+            color: #fafafa;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 36px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 8px 32px rgba(251, 191, 36, 0.25);
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fafafa;
+            letter-spacing: -0.5px;
+        }
+
+        .section {
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.04) 0%,
+                    rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 18px;
         }
 
         .filter-group {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
         }
 
         .filter-group label {
             display: block;
-            margin-bottom: 5px;
             font-size: 12px;
-            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+            font-weight: 500;
         }
 
-        .filter-group select {
+        .filter-group select,
+        .filter-group input {
             width: 100%;
-            padding: 10px;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #fafafa;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.25s ease;
+        }
+
+        .filter-group select:hover,
+        .filter-group input:hover {
+            border-color: rgba(251, 191, 36, 0.4);
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
+        }
+
+        .filter-group select option {
+            background: #1a1a1a;
+            color: #fafafa;
+        }
+
+        .btn-reset {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
             border: none;
-            border-radius: 5px;
+            border-radius: 12px;
+            color: #1a1a1a;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(251, 191, 36, 0.25);
         }
 
-        h2 {
-            margin-top: 0;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 10px;
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(251, 191, 36, 0.35);
         }
 
+        /* Theme Toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 18px;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .theme-toggle span {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #fafafa;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active::after {
+            left: 25px;
+        }
+
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 12px;
         }
 
         .stat-card {
-            background: #34495e;
-            padding: 15px;
-            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 18px 14px;
             text-align: center;
+            transition: all 0.25s ease;
         }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #3498db;
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(251, 191, 36, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         }
 
-        .stat-label {
-            font-size: 11px;
-            color: #95a5a6;
+        .stat-card .value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        .stat-card .label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 6px;
+        }
+
+        /* Legend */
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .legend-item:last-child {
+            border-bottom: none;
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Map Container */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Header Stats */
+        .header-stats {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            gap: 14px;
+            z-index: 1000;
+        }
+
+        .header-stat {
+            background: linear-gradient(135deg,
+                    rgba(0, 0, 0, 0.7) 0%,
+                    rgba(0, 0, 0, 0.5) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 16px 24px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-stat .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        .header-stat .label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Leaflet Popup */
+        .leaflet-popup-content-wrapper {
+            background: linear-gradient(135deg,
+                    rgba(26, 26, 26, 0.95) 0%,
+                    rgba(45, 45, 45, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            color: #fafafa;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(26, 26, 26, 0.95);
+        }
+
+        .popup-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #fbbf24;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .popup-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .popup-label {
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        .popup-value {
+            color: #fafafa;
+            font-weight: 500;
+        }
+
+        /* Cluster */
+        .marker-cluster-small,
+        .marker-cluster-medium,
+        .marker-cluster-large {
+            background: rgba(251, 191, 36, 0.25);
+        }
+
+        .marker-cluster-small div,
+        .marker-cluster-medium div,
+        .marker-cluster-large div {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a1a1a;
+            font-weight: 700;
+        }
+
+        /* Scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
         }
     </style>
 </head>
 
 <body>
-    <div id="sidebar">
-        <h2>📡 Radars France</h2>
-
-        <div class="filter-group">
-            <label>Type de radar</label>
-            <select id="filter-type">
-                <option value="">Tous les types</option>
-                <option value="Radar fixe">Radar fixe</option>
-                <option value="Radar feu rouge">Radar feu rouge</option>
-                <option value="Radar discriminant">Radar discriminant</option>
-                <option value="Radar Vitesse Moyenne">Radar Vitesse Moyenne</option>
-            </select>
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">R</div>
+            <h1>Radars France</h1>
         </div>
 
-        <div class="filter-group">
-            <label>Département</label>
-            <select id="filter-dept">
-                <option value="">Tous</option>
-            </select>
+        <div class="section">
+            <div class="section-title">Filtres</div>
+            <div class="filter-group">
+                <label>Type de radar</label>
+                <select id="filter-type">
+                    <option value="">Tous les types</option>
+                    <option value="Radar fixe">Radar fixe</option>
+                    <option value="Radar feu rouge">Radar feu rouge</option>
+                    <option value="Radar discriminant">Radar discriminant</option>
+                    <option value="Radar Vitesse Moyenne">Radar Vitesse Moyenne</option>
+                    <option value="Radar Passage à Niveau">Radar Passage à Niveau</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Département</label>
+                <select id="filter-dept">
+                    <option value="">Tous les départements</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Vitesse limite</label>
+                <select id="filter-vitesse">
+                    <option value="">Toutes</option>
+                    <option value="50">50 km/h</option>
+                    <option value="70">70 km/h</option>
+                    <option value="90">90 km/h</option>
+                    <option value="110">110 km/h</option>
+                    <option value="130">130 km/h</option>
+                </select>
+            </div>
+            <button class="btn-reset" id="reset-filters">Réinitialiser les filtres</button>
+
+            <div class="theme-toggle">
+                <span>Thème carte</span>
+                <div class="toggle-switch active" id="theme-toggle"></div>
+            </div>
         </div>
 
-        <h2>📊 Statistiques</h2>
-        <div class="stats-grid" id="stats"></div>
+        <div class="section">
+            <div class="section-title">Statistiques</div>
+            <div class="stats-grid" id="stats"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Légende</div>
+            <div class="legend-item"><span class="legend-color" style="background:#e74c3c"></span>Radar fixe</div>
+            <div class="legend-item"><span class="legend-color" style="background:#f39c12"></span>Feu rouge</div>
+            <div class="legend-item"><span class="legend-color" style="background:#9b59b6"></span>Discriminant</div>
+            <div class="legend-item"><span class="legend-color" style="background:#3498db"></span>Vitesse Moyenne</div>
+            <div class="legend-item"><span class="legend-color" style="background:#1abc9c"></span>Passage à Niveau</div>
+        </div>
+    </aside>
+
+    <div class="map-container">
+        <div class="header-stats">
+            <div class="header-stat">
+                <div class="value" id="total-radars">-</div>
+                <div class="label">Total</div>
+            </div>
+            <div class="header-stat">
+                <div class="value" id="visible-radars">-</div>
+                <div class="label">Affichés</div>
+            </div>
+        </div>
+        <div id="map"></div>
     </div>
-    <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script>
+        const COLORS = {
+            'Radar fixe': '#e74c3c',
+            'Radar feu rouge': '#f39c12',
+            'Radar discriminant': '#9b59b6',
+            'Radar Vitesse Moyenne': '#3498db',
+            'Radar Passage à Niveau': '#1abc9c',
+            'Itinéraire': '#95a5a6'
+        };
+
         const map = L.map('map').setView([46.603354, 1.888334], 6);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        const lightTile = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        let currentTile = L.tileLayer(darkTile, { attribution: '© OpenStreetMap © CARTO' }).addTo(map);
+        let isDark = true;
+
+        document.getElementById('theme-toggle').addEventListener('click', function () {
+            this.classList.toggle('active');
+            isDark = !isDark;
+            map.removeLayer(currentTile);
+            currentTile = L.tileLayer(isDark ? darkTile : lightTile).addTo(map);
+        });
+
+        const markers = L.markerClusterGroup({ maxClusterRadius: 50 });
+        map.addLayer(markers);
 
         let allRadars = [];
-        const markers = L.markerClusterGroup();
-        map.addLayer(markers);
 
         fetch('data/radars.json')
             .then(r => r.json())
             .then(data => {
                 allRadars = data;
-                // Remplir les départements
                 const depts = [...new Set(data.map(r => r.dept))].sort();
                 const sel = document.getElementById('filter-dept');
                 depts.forEach(d => sel.innerHTML += `<option value="${d}">${d}</option>`);
                 displayRadars(allRadars);
+                document.getElementById('total-radars').textContent = allRadars.length.toLocaleString();
             });
 
         function displayRadars(radars) {
             markers.clearLayers();
-            const colors = { 'Radar fixe': '#e74c3c', 'Radar feu rouge': '#f39c12', 'Radar discriminant': '#9b59b6', 'Radar Vitesse Moyenne': '#3498db' };
-
             radars.forEach(r => {
                 if (r.latitude && r.longitude) {
+                    const color = COLORS[r.type] || '#95a5a6';
                     L.circleMarker([r.latitude, r.longitude], {
-                        radius: 7, fillColor: colors[r.type] || '#95a5a6', color: '#fff', weight: 2, fillOpacity: 0.8
-                    }).bindPopup(`<b>${r.emplacement || 'Radar'}</b><br>Type: ${r.type}<br>Vitesse: ${r.vitesse || '-'} km/h`).addTo(markers);
+                        radius: 7, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.85
+                    }).bindPopup(`
+                        <div class="popup-title">${r.emplacement || 'Radar'}</div>
+                        <div class="popup-row"><span class="popup-label">Type</span><span class="popup-value">${r.type}</span></div>
+                        ${r.route ? `<div class="popup-row"><span class="popup-label">Route</span><span class="popup-value">${r.route}</span></div>` : ''}
+                        ${r.vitesse ? `<div class="popup-row"><span class="popup-label">Vitesse</span><span class="popup-value">${r.vitesse} km/h</span></div>` : ''}
+                        <div class="popup-row"><span class="popup-label">Département</span><span class="popup-value">${r.dept}</span></div>
+                    `).addTo(markers);
                 }
             });
+            document.getElementById('visible-radars').textContent = radars.length.toLocaleString();
             updateStats(radars);
         }
 
         function updateStats(radars) {
             const types = {};
             radars.forEach(r => types[r.type] = (types[r.type] || 0) + 1);
-            document.getElementById('stats').innerHTML = Object.entries(types).slice(0, 4).map(([t, c]) =>
-                `<div class="stat-card"><div class="stat-value">${c}</div><div class="stat-label">${t.replace('Radar ', '')}</div></div>`
-            ).join('');
+            document.getElementById('stats').innerHTML = Object.entries(types)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4)
+                .map(([t, c]) => `<div class="stat-card"><div class="value">${c}</div><div class="label">${t.replace('Radar ', '')}</div></div>`)
+                .join('');
         }
 
         function applyFilters() {
             const type = document.getElementById('filter-type').value;
             const dept = document.getElementById('filter-dept').value;
-            displayRadars(allRadars.filter(r => (!type || r.type === type) && (!dept || r.dept === dept)));
+            const vitesse = document.getElementById('filter-vitesse').value;
+            displayRadars(allRadars.filter(r =>
+                (!type || r.type === type) &&
+                (!dept || r.dept === dept) &&
+                (!vitesse || r.vitesse == vitesse)
+            ));
         }
 
         document.getElementById('filter-type').addEventListener('change', applyFilters);
         document.getElementById('filter-dept').addEventListener('change', applyFilters);
+        document.getElementById('filter-vitesse').addEventListener('change', applyFilters);
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('filter-type').value = '';
+            document.getElementById('filter-dept').value = '';
+            document.getElementById('filter-vitesse').value = '';
+            displayRadars(allRadars);
+            map.setView([46.603354, 1.888334], 6);
+        });
     </script>
 </body>
 
